@@ -8,17 +8,50 @@ spring:
     import: configserver:http://localhost:9296
   cloud:
     gateway:
-      mvc:
-        routes:
-          - id: ORDER-SERVICE
-            uri: lb://ORDER-SERVICE
-            predicates:
-              - Path=/orders/**
-          - id: PAYMENT-SERVICE
-            uri: lb://PAYMENT-SERVICE
-            predicates:
-              - Path=/payment/**
-          - id: PRODUCT-SERVICE
-            uri: lb://PRODUCT-SERVICE
-            predicates:
-              - Path=/product/**
+      routes:
+        - id: ORDER-SERVICE
+          uri: lb://ORDER-SERVICE
+          predicates:
+            - Path=/orders/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: ORDER-SERVICE
+                fallbackuri: forward:/orderServiceFallback
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 1
+                redis-rate-limiter.burstCapacity: 1
+        - id: PAYMENT-SERVICE
+          uri: lb://PAYMENT-SERVICE
+          predicates:
+            - Path=/payment/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: PAYMENT-SERVICE
+                fallbackuri: forward:/paymentServiceFallback
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 1
+                redis-rate-limiter.burstCapacity: 1
+        - id: PRODUCT-SERVICE
+          uri: lb://PRODUCT-SERVICE
+          predicates:
+            - Path=/product/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: PRODUCT-SERVICE
+                fallbackuri: forward:/productServiceFallback
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 1
+                redis-rate-limiter.burstCapacity: 1
+okta:
+  oauth2:
+    issuer: https://dev-55959703.okta.com/oauth2/default
+    audience: api://default
+    client-id: 0oaf27o6n5PceKHaA5d7
+    client-secret: pmQXiWDdZxYvj-YsCpu1OrA-1Jiqeq0Pi97dc__JfF47JRUqrXU2QzJKMow1E5lO
+    scopes: openid,profile,email,offline_access
