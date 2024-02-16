@@ -1,0 +1,21 @@
+version:'3'
+services:
+	serviceregistry:
+		image:'anuragraju/serviceregistry:latest'
+		container_name:serviceregistry
+		ports:
+			-'8761:8761'
+	configserver:
+		image:'anuragraju/configserver:latest'
+		container_name:configserver
+		ports:
+			-'9296:9296'
+		environment:
+			-EUREKA_SERVER_ADDRESS=http://serviceregistry:8761/eureka
+		healthcheck:
+			test:["CMD","curl","-f","http://configserver:9296/actuator/health"]
+      			interval:10s
+			timeout:5s
+			retries:5
+		depends_on:
+			-serviceregistry
